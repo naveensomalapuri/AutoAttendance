@@ -8,7 +8,7 @@ import com.autoattendance.R
 
 object NotificationHelper {
 
-    private const val CHANNEL_ID = "attendance_channel"
+    const val CHANNEL_ID = "attendance_channel"
     private const val CHANNEL_NAME = "Attendance Alerts"
 
     fun createNotificationChannel(context: Context) {
