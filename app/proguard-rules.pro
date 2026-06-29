@@ -1,0 +1,2 @@
+-keep class com.autoattendance.model.** { *; }
+-keep class com.autoattendance.data.db.** { *; }
