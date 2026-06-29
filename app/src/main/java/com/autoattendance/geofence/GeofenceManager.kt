@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.autoattendance.model.OfficeLocation
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingClient
@@ -11,6 +12,8 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 
 class GeofenceManager(private val context: Context) {
+
+    private val TAG = "GeofenceManager"
 
     private val geofencingClient: GeofencingClient =
         LocationServices.getGeofencingClient(context)
@@ -50,6 +53,8 @@ class GeofenceManager(private val context: Context) {
         geofencingClient.removeGeofences(geofencePendingIntent).run {
             addOnCompleteListener {
                 geofencingClient.addGeofences(request, geofencePendingIntent)
+                    .addOnSuccessListener { Log.d(TAG, "Geofences registered: ${locations.size}") }
+                    .addOnFailureListener { e -> Log.e(TAG, "Geofence registration failed: ${e.message}") }
             }
         }
     }

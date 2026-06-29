@@ -33,7 +33,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".ui.employee.AddEmployeeActivity" />
+        <activity android:name=".ui.employee.EmployeeListActivity" />
         <activity android:name=".ui.attendance.AttendanceHistoryActivity" />
         <activity android:name=".ui.admin.AdminSettingsActivity" />
 
