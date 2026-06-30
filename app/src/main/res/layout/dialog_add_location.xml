@@ -64,12 +64,22 @@
             android:text="100" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
+    <Button
+        android:id="@+id/btnGetLocation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Tip: Use Google Maps to find the latitude and longitude of your office."
+        android:layout_marginTop="12dp"
+        android:text="📍 Use My Current Location"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+    <TextView
+        android:id="@+id/tvLocationStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text=""
         android:textSize="12sp"
-        android:textColor="@color/text_secondary" />
+        android:textColor="@color/primary"
+        android:gravity="center" />
 
 </LinearLayout>
