@@ -57,6 +57,18 @@ class AttendanceRepository(context: Context) {
         attendanceDao.update(openRecord.copy(checkOutTime = System.currentTimeMillis()))
     }
 
+    // Manual check-in — used from Admin panel, bypasses "already open at this location" guard
+    suspend fun manualCheckIn(location: OfficeLocation) {
+        val employees = employeeDao.getAllEmployeesSync()
+        employees.forEach { employee -> checkIn(employee, location) }
+    }
+
+    // Manual check-out from a specific location
+    suspend fun manualCheckOut(location: OfficeLocation) {
+        val employees = employeeDao.getAllEmployeesSync()
+        employees.forEach { employee -> checkOut(employee, location.name) }
+    }
+
     suspend fun getTodayCount(): Int {
         val today = dateFormat.format(Date())
         return attendanceDao.getCountByDate(today)

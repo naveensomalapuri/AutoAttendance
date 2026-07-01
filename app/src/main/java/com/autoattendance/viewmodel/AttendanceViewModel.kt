@@ -60,6 +60,16 @@ class AttendanceViewModel(application: Application) : AndroidViewModel(applicati
         repository.deleteLocation(location)
     }
 
+    // --- Manual attendance ---
+    fun manualCheckIn(location: OfficeLocation) = viewModelScope.launch {
+        repository.manualCheckIn(location)
+        refreshTodayCount()
+    }
+
+    fun manualCheckOut(location: OfficeLocation) = viewModelScope.launch {
+        repository.manualCheckOut(location)
+    }
+
     // --- Attendance ---
     fun setSelectedDate(date: String) {
         _selectedDate.value = date

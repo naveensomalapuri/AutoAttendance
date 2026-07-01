@@ -10,7 +10,9 @@ import com.autoattendance.model.OfficeLocation
 
 class LocationAdapter(
     private val onDelete: (OfficeLocation) -> Unit,
-    private val onToggle: (OfficeLocation) -> Unit
+    private val onToggle: (OfficeLocation) -> Unit,
+    private val onCheckIn: (OfficeLocation) -> Unit,
+    private val onCheckOut: (OfficeLocation) -> Unit
 ) : ListAdapter<OfficeLocation, LocationAdapter.ViewHolder>(DiffCallback()) {
 
     inner class ViewHolder(private val binding: ItemLocationBinding) :
@@ -20,10 +22,14 @@ class LocationAdapter(
             binding.tvLocationName.text = location.name
             binding.tvCoords.text = "%.4f, %.4f".format(location.latitude, location.longitude)
             binding.tvRadius.text = "${location.radiusMeters.toInt()} m radius"
+
             binding.switchActive.isChecked = location.isActive
             binding.switchActive.setOnCheckedChangeListener(null)
             binding.switchActive.setOnCheckedChangeListener { _, _ -> onToggle(location) }
+
             binding.btnDelete.setOnClickListener { onDelete(location) }
+            binding.btnManualCheckIn.setOnClickListener { onCheckIn(location) }
+            binding.btnManualCheckOut.setOnClickListener { onCheckOut(location) }
         }
     }
 

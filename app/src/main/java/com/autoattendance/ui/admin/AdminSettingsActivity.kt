@@ -42,13 +42,35 @@ class AdminSettingsActivity : AppCompatActivity() {
             onDelete = { location ->
                 AlertDialog.Builder(this)
                     .setTitle("Remove Location")
-                    .setMessage("Remove ${location.name} from geofence monitoring?")
+                    .setMessage("Remove \"${location.name}\" from geofence monitoring?")
                     .setPositiveButton("Remove") { _, _ -> viewModel.deleteLocation(location) }
                     .setNegativeButton("Cancel", null)
                     .show()
             },
             onToggle = { location ->
                 viewModel.updateLocation(location.copy(isActive = !location.isActive))
+            },
+            onCheckIn = { location ->
+                AlertDialog.Builder(this)
+                    .setTitle("Manual Check-In")
+                    .setMessage("Record check-in for all employees at \"${location.name}\" right now?")
+                    .setPositiveButton("Check In") { _, _ ->
+                        viewModel.manualCheckIn(location)
+                        Toast.makeText(this, "Check-in recorded at ${location.name}", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
+            },
+            onCheckOut = { location ->
+                AlertDialog.Builder(this)
+                    .setTitle("Manual Check-Out")
+                    .setMessage("Record check-out for all employees at \"${location.name}\" right now?")
+                    .setPositiveButton("Check Out") { _, _ ->
+                        viewModel.manualCheckOut(location)
+                        Toast.makeText(this, "Check-out recorded from ${location.name}", Toast.LENGTH_SHORT).show()
+                    }
+                    .setNegativeButton("Cancel", null)
+                    .show()
             }
         )
 
@@ -59,8 +81,7 @@ class AdminSettingsActivity : AppCompatActivity() {
 
         viewModel.allLocations.observe(this) { locations ->
             adapter.submitList(locations)
-            binding.tvEmpty.visibility =
-                if (locations.isEmpty()) View.VISIBLE else View.GONE
+            binding.tvEmpty.visibility = if (locations.isEmpty()) View.VISIBLE else View.GONE
 
             val active = locations.filter { it.isActive }
             try { geofenceManager?.registerGeofences(active) } catch (e: Exception) { /* no-op */ }
@@ -73,7 +94,7 @@ class AdminSettingsActivity : AppCompatActivity() {
         val dialog = AlertDialog.Builder(this)
             .setTitle("Add Office Location")
             .setView(dialogBinding.root)
-            .setPositiveButton("Add", null)  // set null to handle manually so dialog stays on validation
+            .setPositiveButton("Add", null)
             .setNegativeButton("Cancel", null)
             .create()
 
@@ -100,6 +121,7 @@ class AdminSettingsActivity : AppCompatActivity() {
                             radiusMeters = radius
                         ))
                         dialog.dismiss()
+                        Toast.makeText(this, "\"$name\" added. Toggle ON to activate geofence.", Toast.LENGTH_LONG).show()
                     }
                 }
             }
@@ -124,19 +146,17 @@ class AdminSettingsActivity : AppCompatActivity() {
 
         val fusedClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Try last known location first (instant)
         fusedClient.lastLocation.addOnSuccessListener { location ->
             if (location != null) {
                 dialogBinding.etLatitude.setText("%.6f".format(location.latitude))
                 dialogBinding.etLongitude.setText("%.6f".format(location.longitude))
-                dialogBinding.tvLocationStatus.text = "Location detected (accuracy: ${location.accuracy.toInt()}m)"
+                dialogBinding.tvLocationStatus.text = "Detected (accuracy: ${location.accuracy.toInt()}m)"
                 dialogBinding.btnGetLocation.isEnabled = true
             } else {
-                // No last location — request a fresh one
                 requestFreshLocation(dialogBinding, fusedClient)
             }
         }.addOnFailureListener {
-            dialogBinding.tvLocationStatus.text = "Failed to get location"
+            dialogBinding.tvLocationStatus.text = "Failed — enter manually"
             dialogBinding.btnGetLocation.isEnabled = true
         }
     }
@@ -157,14 +177,14 @@ class AdminSettingsActivity : AppCompatActivity() {
                 if (location != null) {
                     dialogBinding.etLatitude.setText("%.6f".format(location.latitude))
                     dialogBinding.etLongitude.setText("%.6f".format(location.longitude))
-                    dialogBinding.tvLocationStatus.text = "Location detected (accuracy: ${location.accuracy.toInt()}m)"
+                    dialogBinding.tvLocationStatus.text = "Detected (accuracy: ${location.accuracy.toInt()}m)"
                 } else {
-                    dialogBinding.tvLocationStatus.text = "Could not get location — enter manually"
+                    dialogBinding.tvLocationStatus.text = "Could not detect — enter manually"
                 }
             }
             .addOnFailureListener {
                 dialogBinding.btnGetLocation.isEnabled = true
-                dialogBinding.tvLocationStatus.text = "Location error — enter manually"
+                dialogBinding.tvLocationStatus.text = "Error — enter manually"
             }
     }
 
