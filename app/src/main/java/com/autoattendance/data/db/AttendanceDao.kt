@@ -25,8 +25,11 @@ interface AttendanceDao {
     @Query("SELECT * FROM attendance_records WHERE employeeDbId = :employeeId AND date = :date LIMIT 1")
     suspend fun getTodayRecord(employeeId: Int, date: String): AttendanceRecord?
 
-    @Query("SELECT * FROM attendance_records WHERE checkOutTime IS NULL AND employeeDbId = :employeeId")
+    @Query("SELECT * FROM attendance_records WHERE checkOutTime IS NULL AND employeeDbId = :employeeId LIMIT 1")
     suspend fun getOpenRecord(employeeId: Int): AttendanceRecord?
+
+    @Query("SELECT * FROM attendance_records WHERE checkOutTime IS NULL AND employeeDbId = :employeeId AND locationName = :locationName LIMIT 1")
+    suspend fun getOpenRecordForLocation(employeeId: Int, locationName: String): AttendanceRecord?
 
     @Query("SELECT COUNT(*) FROM attendance_records WHERE date = :date")
     suspend fun getCountByDate(date: String): Int

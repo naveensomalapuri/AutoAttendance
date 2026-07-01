@@ -33,10 +33,11 @@ class AttendanceRepository(context: Context) {
     fun getRecordsByEmployee(employeeId: Int) = attendanceDao.getRecordsByEmployee(employeeId)
 
     suspend fun checkIn(employee: Employee, location: OfficeLocation) {
-        val today = dateFormat.format(Date())
-        val existing = attendanceDao.getTodayRecord(employee.id, today)
-        if (existing != null) return  // already checked in today
+        // Only block if already checked-in (open) at THIS specific location
+        val openAtThisLocation = attendanceDao.getOpenRecordForLocation(employee.id, location.name)
+        if (openAtThisLocation != null) return
 
+        val today = dateFormat.format(Date())
         val record = AttendanceRecord(
             employeeDbId = employee.id,
             employeeId = employee.employeeId,
@@ -50,8 +51,9 @@ class AttendanceRepository(context: Context) {
         attendanceDao.insert(record)
     }
 
-    suspend fun checkOut(employee: Employee) {
-        val openRecord = attendanceDao.getOpenRecord(employee.id) ?: return
+    // checkOut must be location-specific so exiting location A doesn't close check-in at location B
+    suspend fun checkOut(employee: Employee, locationName: String) {
+        val openRecord = attendanceDao.getOpenRecordForLocation(employee.id, locationName) ?: return
         attendanceDao.update(openRecord.copy(checkOutTime = System.currentTimeMillis()))
     }
 

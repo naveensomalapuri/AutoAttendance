@@ -17,45 +17,55 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     private val TAG = "GeofenceReceiver"
 
     override fun onReceive(context: Context, intent: Intent) {
-        val geofencingEvent = GeofencingEvent.fromIntent(intent) ?: return
+        val pendingResult = goAsync()  // keeps receiver alive until coroutine finishes
 
-        if (geofencingEvent.hasError()) {
-            val errorMessage = GeofenceStatusCodes.getStatusCodeString(geofencingEvent.errorCode)
-            Log.e(TAG, "Geofence error: $errorMessage")
+        val geofencingEvent = GeofencingEvent.fromIntent(intent)
+        if (geofencingEvent == null || geofencingEvent.hasError()) {
+            val code = geofencingEvent?.errorCode ?: -1
+            Log.e(TAG, "Geofence error: ${GeofenceStatusCodes.getStatusCodeString(code)}")
+            pendingResult.finish()
             return
         }
 
         val transition = geofencingEvent.geofenceTransition
-        val triggeringGeofences = geofencingEvent.triggeringGeofences ?: return
+        val triggeringGeofences = geofencingEvent.triggeringGeofences
+        if (triggeringGeofences.isNullOrEmpty()) {
+            pendingResult.finish()
+            return
+        }
 
         val repository = AttendanceRepository(context)
 
         CoroutineScope(Dispatchers.IO).launch {
-            val employees = repository.getAllEmployeesSync()
+            try {
+                val employees = repository.getAllEmployeesSync()
 
-            for (geofence in triggeringGeofences) {
-                val locationId = geofence.requestId.toIntOrNull() ?: continue
-                val location = repository.getLocationById(locationId) ?: continue
+                for (geofence in triggeringGeofences) {
+                    val locationId = geofence.requestId.toIntOrNull() ?: continue
+                    val location = repository.getLocationById(locationId) ?: continue
 
-                when (transition) {
-                    Geofence.GEOFENCE_TRANSITION_ENTER -> {
-                        Log.d(TAG, "ENTER geofence: ${location.name}")
-                        // Check in all active employees (single-device kiosk mode)
-                        // In a real multi-user scenario, only check in the device owner
-                        employees.forEach { employee ->
-                            repository.checkIn(employee, location)
+                    when (transition) {
+                        Geofence.GEOFENCE_TRANSITION_ENTER -> {
+                            Log.d(TAG, "ENTER geofence: ${location.name}")
+                            employees.forEach { employee ->
+                                repository.checkIn(employee, location)
+                            }
+                            NotificationHelper.showCheckInNotification(context, location.name, locationId)
                         }
-                        NotificationHelper.showCheckInNotification(context, location.name)
-                    }
 
-                    Geofence.GEOFENCE_TRANSITION_EXIT -> {
-                        Log.d(TAG, "EXIT geofence: ${location.name}")
-                        employees.forEach { employee ->
-                            repository.checkOut(employee)
+                        Geofence.GEOFENCE_TRANSITION_EXIT -> {
+                            Log.d(TAG, "EXIT geofence: ${location.name}")
+                            employees.forEach { employee ->
+                                repository.checkOut(employee, location.name)
+                            }
+                            NotificationHelper.showCheckOutNotification(context, location.name, locationId)
                         }
-                        NotificationHelper.showCheckOutNotification(context, location.name)
                     }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error processing geofence event: ${e.message}")
+            } finally {
+                pendingResult.finish()  // release the receiver when done
             }
         }
     }

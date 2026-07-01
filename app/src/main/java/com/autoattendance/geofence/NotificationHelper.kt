@@ -23,21 +23,21 @@ object NotificationHelper {
         manager.createNotificationChannel(channel)
     }
 
-    fun showCheckInNotification(context: Context, locationName: String) {
+    fun showCheckInNotification(context: Context, locationName: String, locationId: Int) {
         showNotification(
             context,
-            id = 1001,
-            title = "Checked In",
-            message = "Auto check-in recorded at $locationName"
+            id = 2000 + locationId,   // unique per location
+            title = "Checked In — $locationName",
+            message = "Auto attendance recorded at $locationName"
         )
     }
 
-    fun showCheckOutNotification(context: Context, locationName: String) {
+    fun showCheckOutNotification(context: Context, locationName: String, locationId: Int) {
         showNotification(
             context,
-            id = 1002,
-            title = "Checked Out",
-            message = "Auto check-out recorded at $locationName"
+            id = 3000 + locationId,   // unique per location
+            title = "Checked Out — $locationName",
+            message = "Departure recorded from $locationName"
         )
     }
 
